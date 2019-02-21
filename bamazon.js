@@ -16,74 +16,37 @@ var connection = mysql.createConnection({
 connection.connect(function(err) {
   if (err) throw err;
   console.log("connected as id " + connection.threadId + "\n");
-  createProduct();
+  startBamazon();
 });
 
-function createProduct() {
-  console.log("Inserting a new product...\n");
-  var query = connection.query(
-    "INSERT INTO products SET ?",
-    {
-      item: "???",
-      department: "????",
-      price: 3.0,
-      quantity: 50
-    },
-    function(err, res) {
-      console.log(res.affectedRows + " product inserted!\n");
-      // Call updateProduct AFTER the INSERT completes
-      updateProduct();
-    }
-  );
+function startBamazon() {
+  inquirer
+    .prompt([{
+      name: "productID",
+      type: "input",
+      message: "What would you like? input ID"
+    }, {
+      name: "productAmount",
+      type: "input",
+      message: "How many would you like?"
+    }])
+    .then(function (response) {
+      console.log(response);
+      connection.query("SELECT * FROM products WHERE ?", {prod_id: parseInt(response.productID)}, function (err, res) {
+        if (err) throw err;
+        console.log(res[0].product_name);
+        console.log(res[0].stock_quantity);
+        console.log(res[0].price);
+        let quantity = res[0].stock_quantity;
 
-  // logs the actual query being run
-  console.log(query.sql);
+        if (quantity >= productAmount) {
+            let proRemaining = quantity - productAmount;
+            console.log(proRemaining);
+          }
+      
+      })
+
+
+    });
 }
 
-function updateProduct() {
-  console.log("Updating all Rocky Road quantities...\n");
-  var query = connection.query(
-    "UPDATE products SET ? WHERE ?",
-    [
-      {
-        quantity: 100
-      },
-      {
-        item: "Rocky Road"
-      }
-    ],
-    function(err, res) {
-      console.log(res.affectedRows + " products updated!\n");
-      // Call deleteProduct AFTER the UPDATE completes
-      deleteProduct();
-    }
-  );
-
-  // logs the actual query being run
-  console.log(query.sql);
-}
-
-function deleteProduct() {
-  console.log("Deleting all strawberry icecream...\n");
-  connection.query(
-    "DELETE FROM products WHERE ?",
-    {
-      item: "strawberry"
-    },
-    function(err, res) {
-      console.log(res.affectedRows + " products deleted!\n");
-      // Call readProducts AFTER the DELETE completes
-      readProducts();
-    }
-  );
-}
-
-function readProducts() {
-  console.log("Selecting all products...\n");
-  connection.query("SELECT * FROM products", function(err, res) {
-    if (err) throw err;
-    // Log all results of the SELECT statement
-    console.log(res);
-    connection.end();
-  });
-}
